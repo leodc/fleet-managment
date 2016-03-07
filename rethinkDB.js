@@ -28,6 +28,9 @@ module.exports = {
     },
     endTrip: function(data){
         return endTripImplementation(data);
+    },
+    getConnection: function(){
+        return getConnectionImplementation();
     }
 };
 
@@ -104,4 +107,12 @@ function endTripImplementation(data){
         conn.close(function (err) { if (err) throw err; })
         return result;
     });
+}
+
+
+function getConnectionImplementation(){
+    /*
+        Open connection
+    */
+    return rethink.connect({ host: HOST, port: PORT, db: DB });
 }

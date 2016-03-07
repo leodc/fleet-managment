@@ -18,13 +18,12 @@
  * View engine
  * 
  * */
- 
  app.set('views', path.join(__dirname, 'views'));
  app.set('view engine', 'jade');
  app.use(bodyParser.json());
  app.use(bodyParser.urlencoded({ extended: false }));
  app.use(express.static(path.join(__dirname, 'public')));
- app.use('/mapa', express.static('public'));
+ app.use('/mapa', express.static('public')); //hacemos accesible los recursos en /mapa/css/xxx
 
 
 
@@ -35,9 +34,11 @@
  * */
  var mapaRouter = require("./routes/map.js");
  var indexRouter = require("./routes/router.js");
+ var carRouter = require("./routes/car.js");
  
  app.use("/mapa", mapaRouter);
  app.use("/", indexRouter);
+ app.use("/car", carRouter);
 
 
 /**
