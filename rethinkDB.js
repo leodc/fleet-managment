@@ -31,8 +31,8 @@ var TABLE = "prototipo";
  * 
  * */
 module.exports = {
-    insert: function (data) {
-        return insertImplementation(data);
+    insert: function (req, res) {
+        return insertImplementation(req, res);
     },
     endTrip: function(data){
         return endTripImplementation(data);
@@ -52,8 +52,8 @@ module.exports = {
  * @return Array with all the trip points
  * 
  * */
-function insertImplementation(data){
-    var response = { status: 0, text: "" };
+function insertImplementation(req, res){
+    var data = JSON.parse(req.body.data);
     
     var connection = getConnection();
     if( 'undefined' !== typeof connection.text ){
@@ -63,24 +63,24 @@ function insertImplementation(data){
     connection.then(function(conn){
         rethink.table(TABLE).insert(data).run(conn, function (err, result) {
             closeConnection(conn);
+            var status_aux;
+            var text_aux;
             
             if (err){
-                response.status = 500;
-                response.text = "Error inserting the data.";
+                status_aux = 500;
+                text_aux = "Error inserting the data.";
                 console.log(err);
-                
-                return response;
             }
             
-            if(result.inserted > 0 ){
-                response.status = 200;
-                response.text = "Inserted corrrectly.";
+            if( result.inserted > 0 ){
+                status_aux = 200;
+                text_aux = "Inserted corrrectly.";
             }
+            
+            res.status(status_aux);
+            res.json( {status: status_aux, text: text_aux} )
         });
     });
-    
-    
-    return response;
 }
 
 
@@ -120,6 +120,8 @@ function endTripImplementation(data){
             
             response.data = result.changes;
             response.data.push(data);
+            
+            return response;
         });
     });
     

@@ -25,6 +25,7 @@
  app.use(bodyParser.urlencoded({ extended: false })); //data as param support
  app.use(express.static(path.join(__dirname, 'public'))); //Make resources public
  app.use('/mapa', express.static('public')); //Make resources public at mapa/css/xxx
+ app.use(express.static(path.join(__dirname, 'test'))); //Make test directory public... for... testing.... 
  
  
  /**

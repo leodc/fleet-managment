@@ -21,7 +21,7 @@ router.post("/end", function(req, res){
     if( req.body !== null ){
         //{ status: 200, text: "Deleted correctly.", data: [] }
         var deleteResponse = rethinkDB.endTrip( req.body );
-        
+        console.log(deleteResponse);
         if( deleteResponse.status === 200 ){
             /**
              * Move the data out of rethinkDB to mongoDB.
@@ -30,6 +30,9 @@ router.post("/end", function(req, res){
              
              //TODO: Handle errors at the insert
              //Maybe -> insert all the data to rethinkDB
+             //Or keep it until the end of timees !!! D:< !!!!! 
+             console.log("MONGO");
+             console.log(response);
         }
     }
     
@@ -43,8 +46,7 @@ module.exports = router;
 function insertPoint(req, res){
     var rethinkdb = req.rethinkdb;
     
-    var response = rethinkdb.insert(req.body);
-    res.json( response );
+    rethinkdb.insert(req, res);
 }
 
 
