@@ -27,49 +27,40 @@ var COLLECTION = "trips";
 
 
 /**
- * 
- * DAO
- * 
- * */
-module.exports = {
-    insert: function (data) {
-        return insertImplementation(data);
-    }
-};
-
-
-/**
  * Insert operation
  * 
  * @data Array of the objects to be inserted on mongoDB
  * 
  * */
-function insertImplementation(data){
-    var response = {status: 200, text: "Inserted correctly."};
+var insert = function(data, callback){
     var server = new mongodb.Server(HOST, PORT);
     var db = new mongodb.Db(DB, server);
     
     
     db.open(function (err, client) {
         if (err){
-            response.status = 500;
-            response.text = "Error getting the connection to MongoDB.";
-            console.log(err);
-            
-            return response;
+            err.connection = true;
+            callback(err, null);
         }
         
         client.collection(COLLECTION).insert(data, {}, function(err, records){
             if (err){
-                response.status = 500;
-                response.text = "Error inserting new data to MongoDB.";
-                console.log(err);
-                
-                return response;
+                err.inserting = true;
+                callback(err, null);
             }
+            
+            callback(null, records);
         });
         
     });
-    
-    return response;
-}
+};
+
+
+/**
+ * 
+ * DAO
+ * 
+ * */
+module.exports = {
+    insert: insert
+};

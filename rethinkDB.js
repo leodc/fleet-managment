@@ -25,21 +25,58 @@ var DB =    "logistica_autos";
 var TABLE = "prototipo";
 
 
+
+/**
+ * Listener
+ * 
+ * @io -> socket to broadcast new information
+ * */
+var listenUpdates = function(io){
+    getConnection().then(function(conn){
+        rethink.table(TABLE).changes().run(conn, function (err, cursor) {
+            if (err) throw err;
+            cursor.on("data", function (data) {
+                io.emit('update_realtime', JSON.stringify(data));
+            });
+        });
+    });
+};
+
+
+
 /**
  * 
- * DAO
+ * Insert
+ * 
+ * @data Point to add
+ * @return Object with the HTTP status of the call and a message for the client.
  * 
  * */
-module.exports = {
-    insert: function (req, res) {
-        return insertImplementation(req, res);
-    },
-    endTrip: function(data){
-        return endTripImplementation(data);
-    },
-    listenUpdates: function(io){
-        return listenUpdatesImplementation(io);
+var insert = function(data, res){
+    var response = {status: 0, text: ""};
+    var connection = getConnection();
+    if( 'undefined' !== typeof connection.text ){
+        return connection;
     }
+    
+    connection.then(function(conn){
+        rethink.table(TABLE).insert(data).run(conn).then(function (result) {
+            closeConnection(conn);
+            response.status = 200;
+            response.text = "Inserted corrrectly.";
+            
+            console.log("Inserted: " + JSON.stringify(data));
+            
+            res.json( response );
+        }).error(function(err){
+            closeConnection(conn);
+            response.status = 500;
+            response.text = "Error inserting the data.";
+            console.log(err);
+            
+            res.json( response );
+        });
+    });
 };
 
 
@@ -52,53 +89,13 @@ module.exports = {
  * @return Array with all the trip points
  * 
  * */
-function insertImplementation(req, res){
-    var data = JSON.parse(req.body.data);
+var endTrip = function(data, mongoDB, res){
+    var defaultResponse = { status: 500, text: "Error getting the information from rethinkDB."};
     
     var connection = getConnection();
     if( 'undefined' !== typeof connection.text ){
-        return connection;
-    }
-    
-    connection.then(function(conn){
-        rethink.table(TABLE).insert(data).run(conn, function (err, result) {
-            closeConnection(conn);
-            var status_aux;
-            var text_aux;
-            
-            if (err){
-                status_aux = 500;
-                text_aux = "Error inserting the data.";
-                console.log(err);
-            }
-            
-            if( result.inserted > 0 ){
-                status_aux = 200;
-                text_aux = "Inserted corrrectly.";
-            }
-            
-            res.status(status_aux);
-            res.json( {status: status_aux, text: text_aux} )
-        });
-    });
-}
-
-
-
-/**
- * 
- * This method removes all the trip points of the car in rethinkDB.
- * 
- * @data Last trip point
- * @return Array with all the trip points
- * 
- * */
-function endTripImplementation(data){
-    var response = { status: 200, text: "Deleted correctly.", data: [] };
-    
-    var connection = getConnection();
-    if( 'undefined' !== typeof connection.text ){
-        return connection;
+        defaultResponse.text = "Error getting the connection.";
+        res.json(defaultResponse);
     }
     
     connection.then(function(conn){
@@ -107,27 +104,38 @@ function endTripImplementation(data){
          * */
         var idCar = data.properties.idCar;
         rethink.db(DB).table(TABLE).filter(rethink.row("properties").getField("idCar").match(idCar))
-                        .orderBy(rethink.row("properties").getField("date")).delete({returnChanges: true}).run(conn, function (err, result) {
-            
-            if (err){
-                response.status = 500;
-                response.text = "Error getting the information.";
-                response.data.push(data);
-                console.log(err);
+            .orderBy(rethink.row("properties").getField("date")).delete({returnChanges: true}).run(conn).then(function(result){
                 
-                return response;
-            }
-            
-            response.data = result.changes;
-            response.data.push(data);
-            
-            return response;
+                /**
+                 * Move the data out of rethinkDB into mongoDB.
+                 * */
+                mongoDB.insert( result.changes, function(err, data){
+                    if(err){
+                        console.log("Error: ");
+                        console.log(err);
+                        defaultResponse.text = "Error in the transaction with mongoDB.";
+                        
+                        res.json(defaultResponse);
+                    }
+                    
+                    defaultResponse.status = 200;
+                    defaultResponse.text = "Trip ended correctly.";
+                    console.log("Trip ended correctly.");
+                    console.log("Trip: " + JSON.stringify(data));
+                    
+                    //TODO: Handle errors at the insert
+                    //Maybe -> insert all the data to rethinkDB
+                    //Or keep it in cache until the end of timees !!! D:< !!!!! 
+                    
+                    res.json(defaultResponse);
+                });
+                
+            }).error(function(err){
+                console.log("Error running the query: " + err);
+                res.json(defaultResponse);
+            });
         });
-    });
-    
-    
-    return response;
-}
+};
 
 
 function getConnection(){
@@ -151,13 +159,13 @@ function closeConnection(conn){
 }
 
 
-function listenUpdatesImplementation(io){
-    getConnection().then(function(conn){
-        rethink.table(TABLE).changes().run(conn, function (err, cursor) {
-            if (err) throw err;
-            cursor.on("data", function (data) {
-                io.emit('update_realtime', JSON.stringify(data));
-            });
-        });
-    });
-}
+/**
+ * 
+ * DAO
+ * 
+ * */
+module.exports = {
+    insert: insert,
+    endTrip: endTrip,
+    listenUpdates: listenUpdates
+};

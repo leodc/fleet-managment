@@ -3,6 +3,12 @@
     <head>
         <title>Trip Test</title>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <style>
+            body, #result, html{
+                width: 100%;
+                height: 100%;
+            }
+        </style>
     </head>
     <body>
         <div id="result"></div>
@@ -14,7 +20,7 @@
                 var URL_ADD = URL_PREFIX + "add/";
                 var URL_END = URL_PREFIX + "end/";
                 
-                var data = {
+                var global_data = {
                     	type: "Feature",												//Valor para todos los puntos
                     	geometry: {
                     		type: "Point",												//Tipo de geometría
@@ -32,9 +38,16 @@
                     	}
                     };
                 
-                $.post( URL_START, { data: JSON.stringify(data) }).done(function( data ) {
-                    $("#result").html("<p>" + data + "</p>");
-                    console.log(data);
+                $.post( URL_START, { data: JSON.stringify(global_data) }).done(function( data ) {
+                    $("#result").append("<p>START: " + JSON.stringify(data) + "</p>");
+                    
+                    $.post( URL_ADD, { data: JSON.stringify(global_data) }).done(function( data ) {
+                        $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
+                        
+                        $.post( URL_END, { data: JSON.stringify(global_data) }).done(function( data ) {
+                            $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
+                        });
+                    });
                 });
             });
         </script>
