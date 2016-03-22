@@ -33,5 +33,7 @@ module.exports = router;
 function insertPoint(req, res){
     var rethinkdb = req.rethinkdb;
     
-    rethinkdb.insert( JSON.parse(req.body.data), res );
+    var geojson = JSON.parse(req.body.data);
+    
+    rethinkdb.insert( geojson, res);
 }

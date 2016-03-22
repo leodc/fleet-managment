@@ -5,6 +5,7 @@
     };
 
     var layers = {};
+    var car_styles = {};
     
     var controller = null;
     var map;
@@ -68,22 +69,26 @@
     }
 
 
-    /*
-            HANDLER EVENT --  update
-
-            If: layer of the car does not exists is created and added to the controller
-            Always: add new feature to the layer
-    */
+    /**
+     * 
+     * HANDLER EVENT --  update
+     * 
+     * If: layer of the car does not exists is created and added to the controller 
+     * Always: add new feature to the layer
+     * 
+     * */
     function addFeature(data){
-        var geoJSON = JSON.parse(data).new_val;
+        var geoJSON = JSON.parse(data.data).new_val;
         if( geoJSON != null ){
-            
             var properties = geoJSON.properties;
-
             var idCar = properties.idCar;
+            
+            var isochrone = parseGeoJSON(data.isochrone, idCar);
     
             //If layer of the car does not exists
             if( layers[idCar] == null ){
+                car_styles[geoJSON.properties.idCar] = buildStyle(geoJSON);
+                
                 layers[idCar] = L.layerGroup();
                 layers[idCar].addTo(map);
 
@@ -93,33 +98,76 @@
 
             //Adding feature
             console.log("adding data");
-            addLayer(layers[idCar], geoJSON);
+            addLayer(layers[idCar], geoJSON, false);
+            addLayer(layers[idCar], isochrone, true);
         }else{
-            geoJSON = JSON.parse(data).old_val;
+            geoJSON = JSON.parse(data.data).old_val;
 
-            if( geoJSON.properties.terminate ){
-                console.log("removing");
-                map.removeLayer(layers[idCar]);
-                layers[idCar] = null;
-                $.notify("The car " + idCar + "  has ended the trip.",{position:"bottom left", className:"info"});
-            }
+            console.log("removing");
+            map.removeLayer(layers[idCar]);
+            layers[idCar] = null;
+            $.notify("The car " + idCar + "  has ended the trip.",{position:"bottom left", className:"info"});
         }
         
     }
-
-
-
-    function addLayer(layerGroup, geoJSON){
+    
+    function addLayer(layerGroup, geoJSON, isochronic){
+        if( !isochronic ){
+            addNormalLayer(layerGroup, geoJSON);
+        }else{
+            addIsochronicLayer(layerGroup, geoJSON);
+        }
+    }
+    
+    
+    function addNormalLayer(layerGroup, geoJSON){
         var coordinates = geoJSON.geometry.coordinates;
-        var style = buildStyle(geoJSON.properties);
-
+        var style = car_styles[geoJSON.properties.idCar];
+        
         var layer = L.circleMarker(
-                L.latLng(coordinates[1], coordinates[0]),
-                style
-            );
+            L.latLng(coordinates[1], coordinates[0]),
+            style
+        );
+        
         layer.bindPopup(buildPopup(geoJSON.properties));
-
         layerGroup.addLayer(layer);
+    }
+    
+    function addIsochronicLayer(layerGroup, geoJSON){
+        var coordinates_array = geoJSON.geometry.coordinates;
+            var style = car_styles[geoJSON.properties.idCar];
+            style.fillOpacity = 0.1;
+            style.opacity = 0.1;
+            style.stroke = false;
+            
+            for(var i = 0; i < coordinates_array.length; i++ ){
+                var coordinates = coordinates_array[i];
+                
+                var layer = L.circleMarker(
+                    L.latLng(coordinates[1], coordinates[0]),
+                    style
+                );
+                
+                layerGroup.addLayer(layer);
+            }
+    }
+    
+    
+    function parseGeoJSON(isochrone, idCar){
+        var geom_iso = JSON.parse(isochrone);
+        
+        
+        var geojson = {};
+        geojson.type = "Feature";
+        
+        geojson.geometry = {};
+        geojson.geometry.type = geom_iso.type;
+        geojson.geometry.coordinates = geom_iso.coordinates[0];
+        
+        geojson.properties = {};
+        geojson.properties.idCar = idCar;
+        
+        return geojson;
     }
 
 
@@ -135,25 +183,14 @@
 
 
     function buildStyle(data) {
-        var colors = {
-            aveo001: "#779ECB",
-            aveo002: "#77DD77",
-            aveo003: "#FFB347",
-            aveo004: "#DEA5A4"
-        };
-
         var colorStroke = "#FFFFFF";
-
-        if (data.rpm > 2500 || data.acel > 0.5 || data.temp > 60) {
-            colorStroke = "#C23B22";
-        }
 
         var aux = {
             stroke: true,
             color: colorStroke,
             weight: 2,
             fill: true,
-            fillColor: colors[data.idCar],
+            fillColor: getRandomColor(),
             opacity:1,
             fillOpacity: 1,
             radius: 6
@@ -161,3 +198,17 @@
 
         return aux;
     }
+
+function getRandomColor(){
+    var rgb = [];
+
+    for(var i = 0; i < 3; i++)
+        rgb.push(Math.floor(Math.random() * 255));
+
+    return "#" + componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);
+}
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}

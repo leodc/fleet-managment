@@ -11,7 +11,7 @@
  var io = require('socket.io')(http);
  var rethinkdb = require("./rethinkDB.js");
  var mongoDB = require("./mongoDB.js");
-
+ 
 
 /**
  * 
@@ -37,6 +37,7 @@
   app.use( function(req, res, next) {
       req.rethinkdb = rethinkdb;
       req.mongoDB = mongoDB;
+      req.io = io;
       next();
   });
 

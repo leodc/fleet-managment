@@ -13,6 +13,7 @@
  * 
  * */
 var rethink = require('rethinkdb');
+var pgrouting = require("./pgrouting.js");
 
 /**
  * 
@@ -36,12 +37,27 @@ var listenUpdates = function(io){
         rethink.table(TABLE).changes().run(conn, function (err, cursor) {
             if (err) throw err;
             cursor.on("data", function (data) {
-                io.emit('update_realtime', JSON.stringify(data));
+                
+                if(data.new_val !== null){
+                    var geojson = data.new_val;
+                    var coordinates = geojson.geometry.coordinates;
+                    
+                    pgrouting.getIsochrone(coordinates[0], coordinates[1], function(err, result){
+                        if(err){
+                            console.log("Error getting the isochrone");
+                            console.log(err);
+                        }
+                        
+                        var isochrone = JSON.parse(result.rows[0].st_asgeojson);
+                        io.emit('update_realtime', {data: JSON.stringify(data), isochrone: JSON.stringify(isochrone)});
+                    });
+                }else{
+                    io.emit('update_realtime', {data: JSON.stringify(data)});
+                }
             });
         });
     });
 };
-
 
 
 /**
@@ -64,8 +80,6 @@ var insert = function(data, res){
             closeConnection(conn);
             response.status = 200;
             response.text = "Inserted corrrectly.";
-            
-            console.log("Inserted: " + JSON.stringify(data));
             
             res.json( response );
         }).error(function(err){
@@ -105,11 +119,13 @@ var endTrip = function(data, mongoDB, res){
         var idCar = data.properties.idCar;
         rethink.db(DB).table(TABLE).filter(rethink.row("properties").getField("idCar").match(idCar))
             .orderBy(rethink.row("properties").getField("date")).delete({returnChanges: true}).run(conn).then(function(result){
+                var tripData = result.changes;
                 
+                tripData.push(data);
                 /**
                  * Move the data out of rethinkDB into mongoDB.
                  * */
-                mongoDB.insert( result.changes, function(err, data){
+                mongoDB.insert( tripData, function(err, data){
                     if(err){
                         console.log("Error: ");
                         console.log(err);
@@ -121,12 +137,10 @@ var endTrip = function(data, mongoDB, res){
                     defaultResponse.status = 200;
                     defaultResponse.text = "Trip ended correctly.";
                     console.log("Trip ended correctly.");
-                    console.log("Trip: " + JSON.stringify(data));
                     
                     //TODO: Handle errors at the insert
                     //Maybe -> insert all the data to rethinkDB
                     //Or keep it in cache until the end of timees !!! D:< !!!!! 
-                    
                     res.json(defaultResponse);
                 });
                 

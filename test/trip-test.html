@@ -20,20 +20,21 @@
                 var URL_ADD = URL_PREFIX + "add/";
                 var URL_END = URL_PREFIX + "end/";
                 
+                
                 var global_data = {
                     	type: "Feature",												//Valor para todos los puntos
                     	geometry: {
                     		type: "Point",												//Tipo de geometría
-                    		coordinates: [125.6, 10.1]									//Coordenadas geograficas
+        		            coordinates: [-99.166192,19.442404]						    //Coordenadas geograficas
                     	},
                     	properties: {
                     		idCar: "pwc-test-001",										//Identificador del coche
                     		route: 1,													//Numero del viaje
                     		date: 1457627912,											//Fecha en formato epoch, segundos transcurridos desde el año 0 (1/1/1970)
                     		data: [
-                    			["rpm", "Revoluciones por minuto", "2000"],				//Valores de condición del coche, se agregan todos los comandos que soporte el OBD
-                    			["air_temp", "Temperatura ambiente", "20"],				//El segundo String es el texto que se mostrara en los mapas de los clientes
-                    			["gas_lvl", "Nivel de gasolina","0.49"]
+                    			["rpm", "Revoluciones por minuto", 2000],				//Valores de condición del coche, se agregan todos los comandos que soporte el OBD
+                    			["air_temp", "Temperatura ambiente", 20],				//El segundo String es el texto que se mostrara en los mapas de los clientes
+                    			["gas_lvl", "Nivel de gasolina",0.49]
                     		]
                     	}
                     };
@@ -41,13 +42,18 @@
                 $.post( URL_START, { data: JSON.stringify(global_data) }).done(function( data ) {
                     $("#result").append("<p>START: " + JSON.stringify(data) + "</p>");
                     
-                    $.post( URL_ADD, { data: JSON.stringify(global_data) }).done(function( data ) {
-                        $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
-                        
-                        $.post( URL_END, { data: JSON.stringify(global_data) }).done(function( data ) {
-                            $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
+                    setTimeout(function(){
+                        $.post( URL_ADD, { data: JSON.stringify(global_data) }).done(function( data ) {
+                            $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
+                            
+                            
+                            setTimeout(function(){
+                                $.post( URL_END, { data: JSON.stringify(global_data) }).done(function( data ) {
+                                    $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
+                                });
+                            }, 5000);
                         });
-                    });
+                    }, 5000);
                 });
             });
         </script>
