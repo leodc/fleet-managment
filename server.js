@@ -11,6 +11,7 @@
  var io = require('socket.io')(http);
  var rethinkdb = require("./rethinkDB.js");
  var mongoDB = require("./mongoDB.js");
+ var pgrouting = require("./pgrouting.js");
  
 
 /**
@@ -35,9 +36,12 @@
   * 
   * */
   app.use( function(req, res, next) {
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       req.rethinkdb = rethinkdb;
       req.mongoDB = mongoDB;
       req.io = io;
+      req.pgrouting = pgrouting;
       next();
   });
 

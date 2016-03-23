@@ -37,8 +37,10 @@ var listenUpdates = function(io){
         rethink.table(TABLE).changes().run(conn, function (err, cursor) {
             if (err) throw err;
             cursor.on("data", function (data) {
+                var data_to_send = {};
+                data_to_send.data = JSON.stringify(data);
                 
-                if(data.new_val !== null){
+                if(data_to_send.data.new_val !== null){
                     var geojson = data.new_val;
                     var coordinates = geojson.geometry.coordinates;
                     
@@ -46,14 +48,17 @@ var listenUpdates = function(io){
                         if(err){
                             console.log("Error getting the isochrone");
                             console.log(err);
+                        }else{
+                            var isochrone = JSON.parse(result.rows[0].st_asgeojson);
+                            data_to_send.isochrone = JSON.stringify(isochrone);
                         }
                         
-                        var isochrone = JSON.parse(result.rows[0].st_asgeojson);
-                        io.emit('update_realtime', {data: JSON.stringify(data), isochrone: JSON.stringify(isochrone)});
+                        io.emit('update_realtime', data_to_send);
                     });
                 }else{
-                    io.emit('update_realtime', {data: JSON.stringify(data)});
+                    io.emit('update_realtime', data_to_send);
                 }
+                
             });
         });
     });

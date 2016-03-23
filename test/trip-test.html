@@ -13,46 +13,70 @@
     <body>
         <div id="result"></div>
         
+        <script type="text/javascript" src="aveo_coords.js"></script>
         <script>
-            $(function(){
-                var URL_PREFIX = "https://pwc-flotilla-leodc.c9users.io/car/";
-                var URL_START = URL_PREFIX + "start/";
-                var URL_ADD = URL_PREFIX + "add/";
-                var URL_END = URL_PREFIX + "end/";
+            var URL_PREFIX = "https://pwc-flotilla-leodc.c9users.io/car/";
+            var URL_ADD = URL_PREFIX + "add/";
+            var URL_END = URL_PREFIX + "end/";
+            var URL_START = URL_PREFIX + "start/";
+            
+            
+    
+            function recursividad(counter, array){
+                /*global aveo_coords*/
+                var data = getData(array[counter]);
                 
-                
+                $.post( URL_ADD, { data: JSON.stringify(data) }).done(function( result ) {
+                    $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
+                    
+                    if( counter >= (array.length-1) ){
+                        $.post( URL_END, { data: JSON.stringify(data) }).done(function( result ) {
+                            $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
+                        });
+                        
+                    }else{
+                        setTimeout(function(){
+                            recursividad(counter+1, array);
+                        }, 5000);
+                    
+                        
+                    }
+                    
+                });
+            }
+            
+            
+            function getData(coordinates){
                 var global_data = {
-                    	type: "Feature",												//Valor para todos los puntos
-                    	geometry: {
-                    		type: "Point",												//Tipo de geometría
-        		            coordinates: [-99.166192,19.442404]						    //Coordenadas geograficas
-                    	},
-                    	properties: {
-                    		idCar: "pwc-test-001",										//Identificador del coche
-                    		route: 1,													//Numero del viaje
-                    		date: 1457627912,											//Fecha en formato epoch, segundos transcurridos desde el año 0 (1/1/1970)
-                    		data: [
-                    			["rpm", "Revoluciones por minuto", 2000],				//Valores de condición del coche, se agregan todos los comandos que soporte el OBD
-                    			["air_temp", "Temperatura ambiente", 20],				//El segundo String es el texto que se mostrara en los mapas de los clientes
-                    			["gas_lvl", "Nivel de gasolina",0.49]
-                    		]
-                    	}
-                    };
+                    type: "Feature",                                                //Valor para todos los puntos
+                    geometry: {
+                        type: "Point",                                              //Tipo de geometría
+                        coordinates: coordinates                                    //Coordenadas geograficas
+                    },
+                    properties: {
+                        idCar: "pwc-test-001",                                      //Identificador del coche
+                        route: 1,                                                   //Numero del viaje
+                        date: 1457627912,                                           //Fecha en formato epoch, segundos transcurridos desde el año 0 (1/1/1970)
+                        data: [
+                            ["rpm", "Revoluciones por minuto", 2000],               //Valores de condición del coche, se agregan todos los comandos que soporte el OBD
+                            ["air_temp", "Temperatura ambiente", 20],               //El segundo String es el texto que se mostrara en los mapas de los clientes
+                            ["gas_lvl", "Nivel de gasolina",0.49]
+                        ]
+                    }
+                };
                 
-                $.post( URL_START, { data: JSON.stringify(global_data) }).done(function( data ) {
-                    $("#result").append("<p>START: " + JSON.stringify(data) + "</p>");
+                return global_data;
+            }
+            
+        
+            $(function(){
+                var start_data = getData([-99.166192,19.442404]);
+                
+                $.post( URL_START, { data: JSON.stringify(start_data) }).done(function( result ) {
+                    $("#result").append("<p>START: " + JSON.stringify(start_data) + "</p>");
                     
                     setTimeout(function(){
-                        $.post( URL_ADD, { data: JSON.stringify(global_data) }).done(function( data ) {
-                            $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
-                            
-                            
-                            setTimeout(function(){
-                                $.post( URL_END, { data: JSON.stringify(global_data) }).done(function( data ) {
-                                    $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
-                                });
-                            }, 5000);
-                        });
+                        recursividad(0, aveo_coords);
                     }, 5000);
                 });
             });

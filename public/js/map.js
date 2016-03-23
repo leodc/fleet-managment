@@ -78,10 +78,14 @@
      * 
      * */
     function addFeature(data){
+        console.log(data);
+        var properties;
+        var idCar;
         var geoJSON = JSON.parse(data.data).new_val;
+        
         if( geoJSON != null ){
-            var properties = geoJSON.properties;
-            var idCar = properties.idCar;
+            properties = geoJSON.properties;
+            idCar = properties.idCar;
             
             var isochrone = parseGeoJSON(data.isochrone, idCar);
     
@@ -94,6 +98,8 @@
 
                 controller.addOverlay(layers[idCar],idCar);
                 $.notify("The car " + idCar + "  has started a new trip.",{position:"bottom right", className:"info"});
+            }else{
+                layers[idCar].clearLayers();
             }
 
             //Adding feature
@@ -102,10 +108,14 @@
             addLayer(layers[idCar], isochrone, true);
         }else{
             geoJSON = JSON.parse(data.data).old_val;
+            properties = geoJSON.properties;
+            idCar = properties.idCar;
 
             console.log("removing");
+            controller.removeLayer(layers[idCar]);
             map.removeLayer(layers[idCar]);
             layers[idCar] = null;
+            
             $.notify("The car " + idCar + "  has ended the trip.",{position:"bottom left", className:"info"});
         }
         
@@ -129,15 +139,17 @@
             style
         );
         
-        layer.bindPopup(buildPopup(geoJSON.properties));
+        
         layerGroup.addLayer(layer);
+        layer.bindPopup(buildPopup(geoJSON));
+        layer.openPopup();
     }
     
     function addIsochronicLayer(layerGroup, geoJSON){
         var coordinates_array = geoJSON.geometry.coordinates;
             var style = car_styles[geoJSON.properties.idCar];
-            style.fillOpacity = 0.1;
-            style.opacity = 0.1;
+            style.fillOpacity = 0.5;
+            style.opacity = 0.5;
             style.stroke = false;
             
             for(var i = 0; i < coordinates_array.length; i++ ){
@@ -171,14 +183,23 @@
     }
 
 
-    function buildPopup(properties){
-        var html = "<b>Car: " + properties.idCar + "</b><br><br>";
-        html += "<b>Speed: </b>" + properties.speed + "<br>";
-        html += "<b>Air Temperature: </b>" + properties.air_temperature + "<br>";
-        html += "<b>Engine Oil Temperature: </b>" + properties.engine_oil_temperature + "<br>";
-        html += "<b>Fuel Level: </b>" + properties.fuel_level + "<br>";
-
-        return html;
+    function buildPopup(geojson){
+        var properties = geojson.properties;
+        var coordinates = geojson.geometry.coordinates;
+        
+        var html = "<b>idCar: " + properties.idCar + "</b><br><br>";
+        
+        for(var i = 0; i < properties.data.length; i++){
+            var data = properties.data[i];
+            html += "<b>" + data[1] + ":</b> " + data[2] + "<br>";
+        }
+        
+        
+        var popup = L.popup()
+                    .setLatLng( coordinates )
+                    .setContent(html);
+        
+        return popup;
     }
 
 

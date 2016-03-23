@@ -18,25 +18,45 @@
  * 
  * */
 var getIsochrone = function(lat, lng, callback){
- var ISO_QUERY = "SELECT ST_AsGeoJSON(ST_MakePolygon(ST_ForceClosed((SELECT ST_MakeLine(f.geom) as geom FROM (SELECT geom_vertex as geom FROM osm_2po_vertex JOIN (SELECT * FROM pgr_drivingDistance('SELECT id, source, target, cost FROM osm_2po_4pgr',(SELECT id from osm_2po_vertex ORDER by geom_vertex <-> ST_GeometryFromText('POINT( " + lat + " " + lng + ")',4326) limit 1), 0.02, true, false )) AS network ON osm_2po_vertex.id = network.id1) as f))))";
+  var ISO_QUERY = "SELECT ST_AsGeoJSON(ST_MakePolygon(ST_ForceClosed((SELECT ST_MakeLine(f.geom) as geom FROM (SELECT geom_vertex as geom FROM osm_2po_vertex JOIN (SELECT * FROM pgr_drivingDistance('SELECT id, source, target, cost FROM osm_2po_4pgr',(SELECT id from osm_2po_vertex ORDER by geom_vertex <-> ST_GeometryFromText('POINT( " + lat + " " + lng + ")',4326) limit 1), 0.02, true, false )) AS network ON osm_2po_vertex.id = network.id1) as f))))";
+  
+  pg.connect(conString, function(err, client, done) {
+   if(err) {
+     return console.error('error fetching client from pool', err);
+   }
+   client.query(ISO_QUERY, [], function(err, result) {
+     //call `done()` to release the client back to the pool
+     done();
  
- pg.connect(conString, function(err, client, done) {
-  if(err) {
-    return console.error('error fetching client from pool', err);
-  }
-  client.query(ISO_QUERY, [], function(err, result) {
-    //call `done()` to release the client back to the pool
-    done();
-
-    if(err) {
-     callback(err, null); 
-    }
-    
-    callback(null, result);
-  });
-});
+     if(err) {
+      callback(err, null); 
+     }
+     
+     callback(null, result);
+   });
+ });
 };
 
+
+var snapTogrid = function(lat, lng, callback){
+ var QUERY = "SELECT ST_X(f.geom) as x, ST_Y(f.geom) as y FROM (SELECT ST_ClosestPoint(ST_GeometryFromText('POINT(" + lat + " " + lng + ")',4326), (SELECT geom_way from osm_2po_4pgr ORDER by geom_way <-> ST_GeometryFromText('POINT(" + lat + " " + lng + ")',4326) limit 1)) as geom) as f";
+  
+  pg.connect(conString, function(err, client, done) {
+   if(err) {
+     return console.error('error fetching client from pool', err);
+   }
+   client.query(QUERY, [], function(err, result) {
+     //call `done()` to release the client back to the pool
+     done();
+ 
+     if(err) {
+      callback(err, null); 
+     }
+     
+     callback(null, result);
+   });
+ });
+};
 
 /**
  * 
@@ -44,5 +64,6 @@ var getIsochrone = function(lat, lng, callback){
  * 
  * */
 module.exports = {
-    getIsochrone: getIsochrone
+    getIsochrone: getIsochrone,
+    snapTogrid: snapTogrid
 };

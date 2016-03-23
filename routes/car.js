@@ -4,36 +4,67 @@ var router = express.Router();
 
 
 router.post('/start', function(req, res) {
-    console.log("New trip");
+    var geojson = JSON.parse(req.body.data);
+    var coordinates = geojson.geometry.coordinates;
     
-    insertPoint(req,res);
+    req.pgrouting.snapTogrid(coordinates[0], coordinates[1], function(err, result){
+        if(err){
+            console.log("Error snaping to grid");
+            console.log(err);
+        }else{
+            coordinates[0] = result.rows[0].x;
+            coordinates[1] = result.rows[0].y;
+        }
+        
+        insertPoint(req, res, geojson);
+    });
 });
 
 
 router.post("/add", function(req,res){
-    console.log("Add point to trip.");
+    var geojson = JSON.parse(req.body.data);
+    var coordinates = geojson.geometry.coordinates;
     
-    insertPoint(req,res);
+    req.pgrouting.snapTogrid(coordinates[0], coordinates[1], function(err, result){
+        if(err){
+            console.log("Error snaping to grid");
+            console.log(err);
+        }else{
+            coordinates[0] = result.rows[0].x;
+            coordinates[1] = result.rows[0].y;
+        }
+        
+        insertPoint(req, res, geojson);
+    });
+    
 });
 
 
 router.post("/end", function(req, res){
-    console.log("End trip.");
-    
     var rethinkDB = req.rethinkdb;
     var mongoDB = req.mongoDB;
     
-    rethinkDB.endTrip( JSON.parse(req.body.data), mongoDB, res);
+    var geojson = JSON.parse(req.body.data);
+    var coordinates = geojson.geometry.coordinates;
+    
+    req.pgrouting.snapTogrid(coordinates[0], coordinates[1], function(err, result){
+        if(err){
+            console.log("Error snaping to grid");
+            console.log(err);
+        }else{
+            coordinates[0] = result.rows[0].x;
+            coordinates[1] = result.rows[0].y;
+        }
+        
+        rethinkDB.endTrip( geojson, mongoDB, res);
+    });
 });
 
 
-module.exports = router;
-
-
-function insertPoint(req, res){
+function insertPoint(req, res, geojson){
     var rethinkdb = req.rethinkdb;
-    
-    var geojson = JSON.parse(req.body.data);
     
     rethinkdb.insert( geojson, res);
 }
+
+module.exports = router;

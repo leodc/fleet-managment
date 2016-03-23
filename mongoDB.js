@@ -23,7 +23,7 @@ var mongodb = require('mongodb');
 var HOST = "107.170.232.222";
 var PORT = 27017;
 var DB = "lovelace";
-var COLLECTION = "trips";
+var COLLECTION = "trips_v2";
 
 
 /**
