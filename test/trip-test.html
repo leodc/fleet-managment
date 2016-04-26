@@ -30,6 +30,7 @@
                     $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
                     
                     if( counter >= (array.length-1) ){
+                        
                         $.post( URL_END, { data: JSON.stringify(data) }).done(function( result ) {
                             $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
                         });
@@ -54,7 +55,7 @@
                         coordinates: coordinates                                    //Coordenadas geograficas
                     },
                     properties: {
-                        idCar: "pwc-test-001",                                      //Identificador del coche
+                        idCar: "pwc_test_001",                                      //Identificador del coche
                         route: 1,                                                   //Numero del viaje
                         date: 1457627912,                                           //Fecha en formato epoch, segundos transcurridos desde el año 0 (1/1/1970)
                         data: [

@@ -1,0 +1,43 @@
+{
+  "name": "pwc-flotilla",
+  "version": "1.0.0",
+  "description": "Sistema de monitoreo de flotillas de coches, mediante una aplicación android se hace una lectura del coche y se envian esos datos a un web service configurado con rethinkDB para visualización en tiempo real, pgrouting y postgis para realizar analisis geograficos, y mongoDB como warehouse.",
+  "main": "server.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "express": "^4.13.4",
+    "geojson-utils": "^1.1.0",
+    "jade": "^1.11.0",
+    "mongodb": "^2.1.7",
+    "path": "^0.12.7",
+    "pg": "^4.5.1",
+    "rethinkdb": "^2.2.2",
+    "socket.io": "^1.4.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leodc/pwc-flotilla.git"
+  },
+  "keywords": [
+    "rethinkdb",
+    "node",
+    "postgis",
+    "pgrouting",
+    "rest",
+    "mongo"
+  ],
+  "author": "Leonel Castañeda",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leodc/pwc-flotilla/issues"
+  },
+  "homepage": "https://github.com/leodc/pwc-flotilla#readme"
+}

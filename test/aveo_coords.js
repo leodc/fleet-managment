@@ -1,5 +1,4 @@
-/*global aveo_coords*/
-aveo_coords = [
+window.aveo_coords = [
     [-99.166058,19.442627],
     [-99.16595,19.442819],
     [-99.165881,19.44292],
