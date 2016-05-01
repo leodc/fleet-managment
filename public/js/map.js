@@ -151,7 +151,6 @@ function addLayer(layerGroup, geoJSON, isochrone){
         
         layerGroup.addLayer(layer);
     }
-    
 }
 
 

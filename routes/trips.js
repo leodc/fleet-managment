@@ -13,13 +13,11 @@ router.get('/', function (req, res, next) {
             var cars = [];
             
             for(var i = 0; i < collections.length; i++){
-                cars.push(collections[i].s.name);
-                console.log(collections[i]);
+                cars.push(collections[i].name);
             }
             
             res.render('trips', {cars: cars});
         }
-        
     });
     
 });

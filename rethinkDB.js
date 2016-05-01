@@ -115,37 +115,36 @@ var endTrip = function(req, res, last_point, mongoDB){
             .orderBy(rethink.row("properties").getField("date")).delete({returnChanges: true}).run(conn).then(function(result){
                 
                 
-                var mongoDocument = {
-                    features: getOldFeatures(result, last_point),
-                    route: last_point.properties.route
-                };
-                mongoDocument.properties = buildProperties(mongoDocument.features, last_point);
+            var mongoDocument = {
+                features: getOldFeatures(result, last_point),
+                route: last_point.properties.route
+            };
+            mongoDocument.properties = buildProperties(mongoDocument.features, last_point);
+            
+            /**
+             * Move the data out of rethinkDB into mongoDB.
+             * */
+            mongoDB.insert( idCar, mongoDocument, function(err, data){
+                if(err){
+                    console.log("Error in the transaction with mongoDB: ", err);
+                    defaultResponse.text = "Error in the transaction with mongoDB.";
+                }else{
+                    defaultResponse.status = 200;
+                    defaultResponse.text = "Trip ended correctly.";
+                }
                 
-                /**
-                 * Move the data out of rethinkDB into mongoDB.
-                 * */
-                mongoDB.insert( idCar, mongoDocument, function(err, data){
-                    if(err){
-                        console.log("Error in the transaction with mongoDB: ", err);
-                        defaultResponse.text = "Error in the transaction with mongoDB.";
-                    }else{
-                        defaultResponse.status = 200;
-                        defaultResponse.text = "Trip ended correctly.";
-                    }
-                    
-                    req.io.emit('delete_realtime', idCar);
-                    
-                    //TODO: Handle errors at the insert
-                    //Maybe -> insert all the data to rethinkDB
-                    //Or keep it in cache until the end of timees !!! D:< !!!!! jk
-                    res.json(defaultResponse);
-                });
+                req.io.emit('delete_realtime', idCar);
                 
-            }).error(function(err){
-                console.log("Error running the query: ", err);
+                //TODO: Handle errors at the insert
+                //Maybe -> insert all the data to rethinkDB
+                //Or keep it in cache until the end of timees !!! D:< !!!!! jk
                 res.json(defaultResponse);
             });
+        }).error(function(err){
+            console.log("Error running the query: ", err);
+            res.json(defaultResponse);
         });
+    });
 };
 
 

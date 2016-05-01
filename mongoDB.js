@@ -10,6 +10,7 @@ var mongodb = require('mongodb');
 var HOST = "107.170.232.222";
 var PORT = 27017;
 var DB = "lovelace_test";
+var COLLECTION = "cars";
 
 
 /**
@@ -72,48 +73,36 @@ var updateCollectionProperties = function(collection, last_trip, callback){
 };
 
 
-/**
- * Get all the collections in mongoDB
- * */
-var getCollections = function(callback){
+var getCollections =  function(callback){
     var server = new mongodb.Server(HOST, PORT);
     var db = new mongodb.Db(DB, server);
     
     db.open(function (err, client) {
         if (err){
-            callback(err, null);
+            console.log("Error ", err);
         }
         
-        client.collections(function(err, records){
-            if (err){
-                callback(err, null);
-            }
-            
-            callback(null, records);
+        db.listCollections().toArray(function(err, collectionsNames){
+            db.close();
+            callback(err, collectionsNames);
         });
-        
     });
 };
 
 
-
-var getCollectionProperties = function(collection, callback){
+var getCollectionData = function(collection, callback){
     var server = new mongodb.Server(HOST, PORT);
     var db = new mongodb.Db(DB, server);
     
     db.open(function (err, client) {
         if (err){
-            callback(err, null);
+            console.log("Error ", err);
         }
         
-        client.collection(collection).find(function(err, records){
-            if (err){
-                callback(err, null);
-            }
-            
-            callback(null, records);
+        client.collection(collection).find().toArray(function(err, result){
+            db.close();
+            callback(err,result);
         });
-        
     });
 };
 
@@ -126,5 +115,5 @@ var getCollectionProperties = function(collection, callback){
 module.exports = {
     insert: insert,
     getCollections: getCollections,
-    getCollectionProperties: getCollectionProperties
+    getCollectionData: getCollectionData
 };
