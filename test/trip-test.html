@@ -22,62 +22,36 @@
             
             
     
-            function recursividad(counter, array){
-                /*global aveo_coords*/
-                var data = getData(array[counter]);
+            function recursividad(counter){
                 
-                $.post( URL_ADD, { data: JSON.stringify(data) }).done(function( result ) {
-                    $("#result").append("<p>ADD: " + JSON.stringify(data) + "</p>");
-                    
-                    if( counter >= (array.length-1) ){
+                
+                if(counter === window.features.length - 1){
+                    $.post( URL_END, { data: JSON.stringify(window.features[counter]) }).done(function( result ) {
+                        $("#result").append("<p>END: " + JSON.stringify(result) + "</p>");
+                    });
+                }else{
+                    $.post( URL_ADD, { data: JSON.stringify(window.features[counter]) }).done(function( result ) {
+                        $("#result").append("<p>ADD: " + JSON.stringify(result) + "</p>");
                         
-                        $.post( URL_END, { data: JSON.stringify(data) }).done(function( result ) {
-                            $("#result").append("<p>END: " + JSON.stringify(data) + "</p>");
-                        });
-                        
-                    }else{
                         setTimeout(function(){
-                            recursividad(counter+1, array);
+                            recursividad(counter + 1);
                         }, 5000);
-                    
                         
-                    }
-                    
-                });
-            }
-            
-            
-            function getData(coordinates){
-                var global_data = {
-                    type: "Feature",                                                //Valor para todos los puntos
-                    geometry: {
-                        type: "Point",                                              //Tipo de geometría
-                        coordinates: coordinates                                    //Coordenadas geograficas
-                    },
-                    properties: {
-                        idCar: "pwc_test_001",                                      //Identificador del coche
-                        route: 1,                                                   //Numero del viaje
-                        date: 1457627912,                                           //Fecha en formato epoch, segundos transcurridos desde el año 0 (1/1/1970)
-                        data: [
-                            ["rpm", "Revoluciones por minuto", 2000],               //Valores de condición del coche, se agregan todos los comandos que soporte el OBD
-                            ["air_temp", "Temperatura ambiente", 20],               //El segundo String es el texto que se mostrara en los mapas de los clientes
-                            ["gas_lvl", "Nivel de gasolina",0.49]
-                        ]
-                    }
-                };
+                    });
+                }
+                /*global $*/
                 
-                return global_data;
             }
             
         
             $(function(){
-                var start_data = getData([-99.166192,19.442404]);
+                var start_data = window.features[0];
                 
                 $.post( URL_START, { data: JSON.stringify(start_data) }).done(function( result ) {
                     $("#result").append("<p>START: " + JSON.stringify(start_data) + "</p>");
                     
                     setTimeout(function(){
-                        recursividad(0, aveo_coords);
+                        recursividad(1);
                     }, 5000);
                 });
             });

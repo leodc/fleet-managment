@@ -9,8 +9,7 @@ var mongodb = require('mongodb');
  * */
 var HOST = "107.170.232.222";
 var PORT = 27017;
-var DB = "lovelace_test";
-var COLLECTION = "cars";
+var DB = "lovelace";
 
 
 /**
@@ -36,6 +35,8 @@ var insert = function(idCar, data, callback){
  * Updates the collection properties of the car: new_collection.properties.idCar
  * */
 var updateCollectionProperties = function(collection, last_trip, callback){
+    delete last_trip.isochrone;
+    
     var server = new mongodb.Server(HOST, PORT);
     var db = new mongodb.Db(DB, server);
     
@@ -84,13 +85,17 @@ var getCollections =  function(callback){
         
         db.listCollections().toArray(function(err, collectionsNames){
             db.close();
-            callback(err, collectionsNames);
+            if(err){
+                console.log("Error getting the collection names", err);
+            }else{
+                callback(collectionsNames);
+            }
         });
     });
 };
 
 
-var getCollectionData = function(collection, callback){
+var getCollectionData = function(filter, collection, callback){
     var server = new mongodb.Server(HOST, PORT);
     var db = new mongodb.Db(DB, server);
     
@@ -99,7 +104,7 @@ var getCollectionData = function(collection, callback){
             console.log("Error ", err);
         }
         
-        client.collection(collection).find().toArray(function(err, result){
+        client.collection(collection).find(filter).toArray(function(err, result){
             db.close();
             callback(err,result);
         });

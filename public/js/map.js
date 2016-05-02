@@ -14,9 +14,11 @@ var map;
 /*
     global $
 */
-$(function () {
-    map = buildMap("map_realtime");
-});
+window.startMap = function(idCar){
+    $("#"+idCar).css("width","100%");
+    $("#"+idCar).css("height","600px");
+    map = buildMap(idCar);
+};
 
 
 /*

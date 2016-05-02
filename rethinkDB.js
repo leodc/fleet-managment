@@ -197,12 +197,15 @@ function buildProperties(features, last_point){
     for( var i = 0; i < features.length - 1; i++ ){
         properties.distance += gju.pointDistance(features[i].geometry, features[i + 1].geometry);
         
-        if(features[i].properties.data["rpm"] === 0)
-            properties.stop_time++;
+        for(var j = 0; j < features[i].properties.data.length; j++){
+            if(features[i].properties.data[j][0] === 'speed' && features[i].properties.data[j][2] === 0){
+                properties.stop_time++;
+                break;
+            }
+        }
     }
     
-    properties.stop_time = (properties.stop_time - 1) * 5;
-    
+    properties.stop_time = properties.stop_time * 5; // s
     return properties;
 }
 

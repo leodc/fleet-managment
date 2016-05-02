@@ -12,7 +12,11 @@ html(lang='es')
     // Custom Fonts
     link(href='font-awesome/css/font-awesome.min.css', rel='stylesheet', type='text/css')
     // Leaflet
-    link(rel='stylesheet', href='js/leaflet/leaflet.css')
+    link(href='js/leaflet/leaflet.css', rel='stylesheet')
+    // Custom
+    link(href='css/car.css', rel='stylesheet')
+    // D3
+    link(href='js/d3/d3.parcoords.css', rel='stylesheet')
     // HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries
     // WARNING: Respond.js doesn't work if you view the page via file://
     //if lt IE 9
@@ -94,12 +98,12 @@ html(lang='es')
               a(href='../../')
                 i.fa.fa-fw.fa-dashboard
                 |  Dashboard
-            li.active
-              a(href='')
+            li
+              a(href='../map')
                 i.fa.fa-fw.fa-globe
                 |  Mapa
-            li
-              a(href='../cars')
+            li.active
+              a(href='')
                 i.fa.fa-fw.fa-car
                 |  Automóviles
         // /.navbar-collapse
@@ -109,29 +113,68 @@ html(lang='es')
           .row
             .col-lg-12
               h2
-                | Monitoreo en tiempo real.
+                | #{idCar}
                 hr
-          // /.row
+            ol.breadcrumb
+              li
+                i.fa.fa-car
+                a(href='./')  Automóviles
+              li.active
+                i.fa.fa-bar-chart-o
+                |  #{idCar}
           .row
-            #map_realtime.content
+            #mapCar.content
+          #graphContainer.content.parcoords(style="width:100%;height:200px")
         // /.container-fluid
       // /#page-wrapper
     // /#wrapper
     // Utils
-    script(src="js/utils.js")
+    // D3
+    script(src='https://d3js.org/d3.v3.min.js', charset="utf-8")
+    script(src='js/d3/d3.parcoords.js')
     // jQuery
     script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js')
     // Bootstrap Core JavaScript
     script(src='js/bootstrap/bootstrap.min.js')
     // Leaflet
     script(src='js/leaflet/leaflet.js')
-    script(src='js/map.js')
-    // Real-time
-    script(src='https://cdn.socket.io/socket.io-1.3.7.js')
-    script(src='js/socketMap.js')
+    script(src='js/mapCar.js')
     // Notifications
     script(src='js/plugins/notify.min.js')
+    script(src='js/utils.js')
+    script(src='js/graphsCar.js')
+    // Socket
+    script(src='https://cdn.socket.io/socket.io-1.3.7.js')
     script.
         $(function(){
-            window.startMap("map_realtime","600px");
+            window.startMap("mapCar","300px");
+            
+            window.socket = io();
+            socket.emit("carFeatures", "#{idCar}");
+            socket.on("carFeatures", function(data){
+                var properties = [];
+                
+                for(var i = 0; i < data.length; i++){
+                    if(data[i].features){
+                        window.addLayer(data[i].features);
+                        
+                        for(var j = 0; j < data[i].features.length; j++){
+                            var featureProperties = arrayToJson(data[i].features[j].properties.data);
+                            properties.push(featureProperties);
+                        }
+                    }
+                }
+                
+                window.parallelBar(properties);
+            });
         });
+        
+        function arrayToJson(data){
+            var aux = {};
+            for(var i = 0; i < data.length; i++){
+                aux[data[i][0]] = data[i][2];
+            }
+            
+            return aux;
+        }
+    

@@ -5,8 +5,11 @@ var router = express.Router();
 
 router.all('*', function (req, res, next) {
     var geojson = JSON.parse(req.body.data);
-    
     var coordinates = geojson.geometry.coordinates;
+    
+    for(var i = 0; i < geojson.properties.data.length; i++){
+        geojson.properties.data[i][2] = parseFloat(geojson.properties.data[i][2]);
+    }
     
     req.pgrouting.snapTogrid(coordinates[0], coordinates[1], function(err, result){
         if(err){
